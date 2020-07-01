@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Проект</title>
+  <link rel="shortcut icon" href="images/favicon.ico" type="image/x-icon">
+  <link rel="stylesheet" href="styles/style.css">
+  <script src="js/selector.js"></script>
+  <script src="js/circle.js"></script>
+  <script src="js/rectangle.js"></script>
+  <script src="js/line.js"></script>
+  <script src="js/polyline.js"></script>
+  <script src="js/save_import.js"></script>
+  <script src="http://fe.it-academy.by/JQ/jquery.js"></script>
+</head>
+    <body>
+        <div class="container">
+            <div class="header">
+                <div class="contr_btns">
+                    <div class="btns_group">
+                        <div class="btn_item" id="btn_save" title="Save To Storage" onclick="saveSVG(drinkStorage)"></div>
+                        <div class="btn_item" id="btn_import" title="Open"></div>
+                        <div class="btn_item" id="btn_del" title="Delete File" onclick="deleteSVG(drinkStorage)"></div>
+                    </div>
+                    <span class="tool_sep"></span>
+                    <div class="btns_group">
+                        <div class="btn_item" id="btn_save_curr_svg" title="Save Current File"></div>
+                    </div>
+                    <span class="tool_sep"></span>
+                    <div class="btns_group">
+                        <div class="btn_item" id="btn_clone" title="Clone Element"></div>
+                        <div class="btn_item" id="btn_delete" title="Delete Element (del)"></div>
+                    </div>
+                    <span class="tool_sep"></span>
+                    <div class="btns_group">
+                        <div class="btn_item" id="btn_front" title="Bring To front"></div>
+                        <div class="btn_item" id="btn_back" title="Send To Back"></div>
+                    </div>
+                    <span class="tool_sep"></span>
+                    <div class="btns_group">
+                        <div class="btn_item" id="btn_grid" title="Show/Hide Grid"></div>
+                    </div>
+                    <span class="tool_sep"></span>
+                    <div class="btns_group">
+                        <div class="btn_item" id="btn_clear" title="Clear Field"></div>
+                    </div>
+                    <span class="tool_sep"></span>
+                    <div class="btns_group">
+                    </div>
+                </div>
+                <div class="saved_files" id="saved_files">
+                    <p>Saved files:</p>
+                    <ul id="files_list">
+                    </ul>
+                </div>
+            </div>
+            <div id="rulers">
+                <div id="ruler_corner"></div>
+                <div id="ruler_x">
+                    <div style="width: 1920px">
+                        <canvas id="r_x" width="1920" height="15"></canvas>
+                    </div>
+                </div>
+                <div id="ruler_y">
+                    <div style="height: 1440px">
+                        <canvas id="r_y" width = "15" height="1440"></canvas>
+                    </div>
+                </div>
+            </div>
+            <div class="main">
+                <div id="workarea" class="content">
+                    <div id="svg_area" class="workarea">
+                        <svg id="gridsvg" width=640 height=480 style="background-color: white; z-index: 1"  xmlns='http://www.w3.org/2000/svg'>
+                            <defs>
+                                <pattern id="smallGrid" width="10" height="10" patternUnits="userSpaceOnUse">
+                                    <path d="M 10 0 L 0 0 0 10" fill="none" stroke="gray" stroke-width="0.5"/>
+                                </pattern>
+                                <pattern id="grid" width="100" height="100" patternUnits="userSpaceOnUse">
+                                    <rect width="100" height="100" fill="url(#smallGrid)"/>
+                                    <path d="M 100 0 L 0 0 0 100" fill="none" stroke="gray" stroke-width="1"/>
+                                </pattern>
+                            </defs>
+                            <rect id="showGrid" width="100%" height="100%" fill="none" />
+                        </svg>
+                        <svg vie id="svg_elem" width=640 height=480 style=" z-index: 2" xmlns='http://www.w3.org/2000/svg'></svg>
+                    </div>
+                </div>
+                <div class="controllers">
+                    <div class="btns_wrapper" id="contr">
+                        <div class="btn_item" id="btn_select" title="Select"></div>
+                        <div class="btn_item" id="btn_pencil" title="Pencil"></div>
+                        <div class="btn_item" id="btn_line" title="Line"></div>
+                        <div class="btn_item" id="btn_rectangle" title="Rectangle / Square"></div>
+                        <div class="btn_item" id="btn_circle" title="Ellipse / Circle"></div>
+                        <!-- <div class="btn_item" id="btn_text"></div>
+                        <div class="btn_item" id="btn_zoom"></div>
+                        <div class="btn_item" id="btn_image"></div> -->
+                    </div>
+                </div>
+            </div>
+            <div class="footer">
+                <div class="color_pickers">
+                    <div class="picker">
+                        <div class="group_wrap">
+                            <img src="images/fill_color.svg">
+                            <input class="colors" id="fill_color" type="color" value="#ff0000">
+                        </div>
+                        <div class="group_wrap">
+                            <img src="images/opacity_pic.svg">
+                            <input type="range" id="opacity" min="0" max="1" step="0.01" value="1">
+                        </div>
+                    </div>
+                    <div class="picker picker2">
+                        <div class="group_wrap">
+                            <img src="images/stroke_color.svg">
+                            <input class="colors" id="stroke_color" type="color" value="#000000">
+                        </div>
+                        <div class="group_wrap">
+                            <img src="images/border-size.png">
+                            <input type="range" id="stroke_width" min="0" max="50" step="1" value="5">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <script>
+            "use strict";
+
+            let ajaxHandlerScript = "https://fe.it-academy.by/AjaxStringStorage2.php";
+            let stringNameDrinks = 'DRAGUN_SS_PROJECT';
+            let svg = document.getElementById("svg_elem");
+
+            //----- Центрирование workArea
+            svg.scrollIntoView( { behavior: "auto", block: "center", inline: "center" } );
+            //-----
+            
+
+            //----- Сетка workArea
+            let grid = document.getElementById("btn_grid");
+            grid.addEventListener("click", displayGrid);
+
+            function displayGrid(EO) {
+                
+                EO = EO || window.event;
+
+                if (grid.classList.contains("btn_item_active")) {
+                    document.getElementById("showGrid").setAttribute("fill", "none");
+                } else {
+                    document.getElementById("showGrid").setAttribute("fill", "url(#grid)");
+                }
+                grid.classList.toggle("btn_item_active");
+
+            }
+            //-----
+
+
+            //----- Линейки
+            let rulerX = document.getElementById("r_x");
+            let context = rulerX.getContext("2d");
+            let rulerY = document.getElementById("r_y");
+            let context2 = rulerY.getContext("2d");
+            context.beginPath();
+            for (let i = 0; i < rulerX.width; i += 10) {
+                let y = (i / 100 == parseInt(i / 100)) ? 0 : 10;
+                context.moveTo(i + 15, y);
+                context.lineTo(i + 15, 15);
+                
+            }
+            context.stroke();
+
+            context2.beginPath();
+            for (let i = 0; i < rulerY.height; i += 10) {
+                let x = (i / 100 == parseInt(i / 100)) ? 0 : 10;
+                context2.moveTo(x, i + 15);
+                context2.lineTo(15, i + 15);
+            }
+            context2.stroke();
+            //-----
+
+
+            //----- Движение линеек
+            let rx = document.getElementById("r_x");
+            let ry = document.getElementById("r_y");
+            let area = document.getElementById("workarea");
+            let warea = document.getElementById("svg_area");
+            let rulerCorner = document.getElementById("ruler_corner");
+            let rulerCornerCoords = getCoords(rulerCorner);
+
+            area.addEventListener('scroll', function(EO) {
+                let wAreaCoord = getCoords(warea);
+                rx.style.left = (wAreaCoord.left - 30) + "px";
+                ry.style.top = (wAreaCoord.top - 116) + "px";
+            });
+            //-----
+
+
+            //----- Переключение кнопок
+            let field = document.getElementById("contr");
+            field.addEventListener("click", anyBtnClick);
+            document.getElementById("btn_select").addEventListener("click", btnSelectClick);
+
+            function btnSelectClick(EO) {
+
+                EO = EO || window.event;
+
+                let btnsArr = Array.from(field.children);
+                let btn = document.getElementById("btn_select");
+                /* btn.classList.toggle("btn_item_active"); */
+                btn.classList.add('btn_item_active');
+
+                for (let i = 0; i < btnsArr.length; i++) {
+                    if (btnsArr[i].classList.contains("btn_item_active")) {
+                        if(btnsArr[i].id == "btn_select") {
+                            continue;
+                        }
+                        btnsArr[i].classList.toggle("btn_item_active");
+                    }
+                    
+                }
+                disableAllDrawStart();
+                removeAllListeners();
+                selector.selectStart = true;
+                selector.addSelectListeners();
+            }
+
+            
+
+            function anyBtnClick(EO) {
+
+                EO = EO || window.event;
+                let btn = EO.target;
+                let btnsArr = Array.from(field.children);
+
+                if (EO.target.id == "contr") { //клик мимо кнопок
+                    return
+                }
+
+                if (btn.classList.contains("btn_item_active")) {
+                    return btn.id;
+                }
+
+                for (let i = 0; i < btnsArr.length; i++) {
+                    
+                    if (btnsArr[i].classList.contains("btn_item_active")) {
+                        btnsArr[i].classList.toggle("btn_item_active");
+                    }
+                }
+                
+                btn.classList.toggle("btn_item_active");
+
+                switch (btn.id) {
+
+                    case "btn_pencil":
+                        disableAllDrawStart();
+                        removeAllListeners();
+                        selector.selectStart = false;
+                        newPolyline.drawStart = true;
+                        newPolyline.addListeners();
+                        selector.addResizeListeners();
+                        break;
+                
+                    case "btn_line":
+                        disableAllDrawStart();
+                        removeAllListeners();
+                        selector.selectStart = false;
+                        newLine.drawStart = true;
+                        newLine.addListeners();
+                        selector.addResizeListeners();
+                        break;
+                
+                    case "btn_rectangle":
+                        disableAllDrawStart();
+                        removeAllListeners();
+                        selector.selectStart = false;
+                        newRectangle.drawStart = true;
+                        newRectangle.addListeners();
+                        selector.addResizeListeners();
+                        break;
+                
+                    case "btn_circle":
+                        disableAllDrawStart();
+                        removeAllListeners();
+                        selector.selectStart = false;
+                        newCircle.drawStart = true;
+                        newCircle.addListeners();
+                        selector.addResizeListeners();
+                        break;
+                
+                    case "btn_text":
+                        disableAllDrawStart();
+                        removeAllListeners();
+                        selector.selectStart = false;
+                        break;
+                
+                    case "btn_zoom":
+                        disableAllDrawStart();
+                        removeAllListeners();
+                        selector.selectStart = false;
+                        break;
+                
+                    case "btn_image":
+                        disableAllDrawStart();
+                        removeAllListeners();
+                        selector.selectStart = false;
+                        break;
+                
+                    default:
+                        break;
+                }
+            }
+            //-----
+
+            
+            //----- Получение координат любого DOM-элемента
+            function getCoords(elem) {
+                let box = elem.getBoundingClientRect();
+
+                return {
+                    top: box.top + pageYOffset,
+                    left: box.left + pageXOffset,
+                    width: box.width,
+                    height: box.height
+                };
+            }
+            //-----
+
+            //----- Выкл. все drawStart
+            function disableAllDrawStart() {
+
+                newCircle.drawStart = false;
+                newRectangle.drawStart = false;
+                newLine.drawStart = false;
+                newPolyline.drawStart = false;
+
+            }
+            //-----
+
+            //----- Отключить все подписки на события
+            function removeAllListeners() {
+
+                newCircle.removeListeners();
+                newRectangle.removeListeners();
+                newLine.removeListeners();
+                newPolyline.removeListeners();
+                selector.removeSelectListeners();
+
+            }
+            //-----
+
+            //---- Угол поворота для transform rotate
+            function angleBetweenPoints(p1, p2) {
+                var angle = null;
+                angle = Math.atan2(p2.y - p1.y, p2.x - p1.x);
+                return (angle * 180 / Math.PI) - 90;
+            }
+            //-----
+
+            //----- Очистить рабочее поле
+            document.getElementById("btn_clear").addEventListener("click", cleraField);
+
+            function cleraField(EO) {
+                EO = EO || window.event;
+                svg.innerHTML = "";
+                selector.updateSelection(null);
+            }
+            //-----
+
+            let selector = new Selector(document.getElementById('svg_elem'));
+            let newCircle = new DrawCircle(document.getElementById('svg_elem'), selector);
+            let newRectangle = new DrawRectangle(document.getElementById('svg_elem'), selector);
+            let newLine = new DrawLine(document.getElementById('svg_elem'), selector);
+            let newPolyline = new DrawPolyline(document.getElementById('svg_elem'), selector);
+            var drinkStorage = new AJAXStorage( stringNameDrinks, () => { updList() }, () => { disBtns() }, () => { enBtns() } ); 
+
+            let updatePassword;
+            
+            let addItem = false;
+            let currentFile = null;
+
+            document.getElementById("files_list").addEventListener("click", openSvg);
+            document.getElementById("btn_save_curr_svg").addEventListener("click", saveCurrSVG);
+
+            //----- Сохранить текущий файл
+            function saveCurrSVG(storage) {
+                if (currentFile) {
+                    let kind = svg.innerHTML;
+                    let description = {};
+                    description.type = kind;
+                    drinkStorage.addValue(currentFile, description);
+                } else {
+                    let name = prompt("Это новый файл, под каким именем его сохранить?");
+                    if (name == null) {
+                        return;
+                    } else if (name == "") {
+                        return alert("Имя файла должно состоять минимум из одного символа");
+                    } else if (name.trim() == "") {
+                        return alert("Вы ввели одни пробелы!");
+                    }
+                    addItem = true;
+                    let kind = svg.innerHTML;
+                    let description = {};
+                    description.type = kind;
+                    storage.addValue(name, description);
+                }
+            }
+            //-----
+            
+            //----- Сохранить файл в хранилище
+            let name;
+            function saveSVG(storage) {
+
+                name = prompt("Под каким именем сохранить файл?");
+                if (name == null) {
+                    return;
+                } else if (name == "") {
+                    return alert("Имя файла должно состоять минимум из одного символа");
+                } else if (name.trim() == "") {
+                    return alert("Вы ввели одни пробелы!");
+                }
+                addItem = true;
+                let kind = svg.innerHTML;
+                let description = {};
+                description.type = kind;
+                storage.addValue(name, description);
+                
+            }
+            //-----
+
+            //----- Открыть файл
+            function openSvg(EO) {
+
+                EO = EO || window.event;
+                var storage = drinkStorage;
+                selector.updateSelection(null);
+
+                (function importSVG() {
+                    if (EO.target.tagName == "ul" || EO.target.innerText == "List is empty") {
+                        return;
+                    } else {
+                        let savedFileName = EO.target.innerText;
+                        currentFile = savedFileName;
+                        let a = drinkStorage.getValue(savedFileName);
+                        if (a) {
+                            svg.innerHTML = (a.type);
+                        } else if (a == undefined) {
+                            console.log("нет такого рисунка");
+                            console.log("");
+                        }
+
+                    }
+                   
+                })()
+            }
+            //-----
+
+
+            let deleteBtns = document.querySelectorAll(".delFile");
+            for (let i = 0; i < deleteBtns.length; i++) {
+                deleteBtns[i].addEventListener("click", deleteSVG);
+            }
+
+            //----- Удвлить файл
+            let deleting = false;
+            function deleteSVG(storage) {
+
+                let name = prompt("Какой файл удалить?");
+                if (name == null) {
+                    return;
+                } else if (name == "") {
+                    return alert("Вы ничего не ввели!");
+                }
+
+                let b = storage.deleteValue(name);
+                if (b) {
+                    deleting = true;
+                    getListOfAllSvg(drinkStorage)
+                    console.log("Удалён успешно Ваш файл");
+                    console.log("");
+                } else {
+                    console.log("Нет такого файла");
+                    console.log("");
+                }
+            }
+            //-----
+            let repeatName = false;
+            //----- Список всех сохранённых файлов
+            function getListOfAllSvg(storage) {
+
+                let c = storage.getKeys();
+                if (currentFile) {
+                    return;
+
+                } else if(deleting) {
+                    document.getElementById("files_list").innerHTML = "";
+                    for (let i = 0; i < c.length; i++) {
+                        let l = document.createElement("li");
+                        l.innerHTML = c[i];
+                        document.getElementById("files_list").append(l)
+                        console.log(i + 1 + ": " + c[i]);
+                    }
+                    deleting = false;
+
+                } else if (c.length == 0) {
+
+                    let l = document.createElement("li");
+                    l.innerHTML = "List is empty";
+                    document.getElementById("files_list").append(l);
+                    
+
+                }  else if (addItem && c.length == 1) {
+
+                    let listEl = document.getElementById("files_list");
+                    listEl.removeChild(listEl.lastChild);
+                    let l = document.createElement("li");
+                    l.innerHTML = c[c.length-1];
+                    document.getElementById("files_list").append(l);
+
+                } else if (repeatName) {
+
+                    return;
+
+                } else if (addItem) {
+                    
+                    let l = document.createElement("li");
+                    l.innerHTML = c[c.length-1];
+                    document.getElementById("files_list").append(l);
+                    l.appendChild(delBtn);
+                    addItem = false;
+
+                } else {
+                    
+                    for (let i = 0; i < c.length; i++) {
+                        let l = document.createElement("li");
+                        l.innerHTML = c[i];
+                        document.getElementById("files_list").append(l)
+                        console.log(i + 1 + ": " + c[i]);
+                    }
+
+                }
+            }
+            //-----
+
+            function errorHandler(jqXHR, statusStr, errorStr) {
+                console.log(statusStr + " " + errorStr);
+            }
+
+            //----- Меню сохранённых файлов
+            let menuElem = document.getElementById('btn_import');
+            let titleElem = document.getElementById('saved_files');
+
+            menuElem.onclick = function() {
+                titleElem.classList.toggle('open');
+            };
+            //-----
+
+
+            function updList() {
+                getListOfAllSvg(drinkStorage)
+            }
+
+            function disBtns() {
+                console.log("qwe")
+                document.getElementById("files_list").removeEventListener("click", openSvg);
+                let deleteBtns = document.querySelectorAll(".delFile");
+                console.log(deleteBtns)
+                for (let i = 0; i < deleteBtns.length; i++) {
+                    deleteBtns[i].removeEventListener("click", deleteSVG);
+                }
+                document.body.style.cursor = "pointer"
+            }
+
+            function enBtns() {
+                console.log("asd")
+                document.getElementById("files_list").addEventListener("click", openSvg);
+                let deleteBtns = document.querySelectorAll(".delFile");
+                for (let i = 0; i < deleteBtns.length; i++) {
+                    deleteBtns[i].addEventListener("click", deleteSVG);
+                }
+                document.body.style.cursor = "default"
+            }
+
+        </script>
+    </body>
+</html>
